@@ -2,7 +2,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
@@ -24,16 +23,16 @@ internal class FlowPracticalExample {
             val storeCiFlow = flow {
                 storeIds.forEach { storeId ->
                     println("Now fetching CI's for store ${storeId.value}")
-                    repeat(15) {
+                    repeat(10) {
                         val randomCi = ConsumerItem(Random.nextInt(111111, 999999).toString())
                         emit(StoreCi(storeId, randomCi))
                     }
-                    delay(1500)
                     println("Fetched all CI's for store ${storeId.value}")
+                    delay(1500)
                 }
             }
 
-            storeCiFlow.buffer(25).collect {
+            storeCiFlow.buffer(100).collect {
                 println("Sending override for store ${it.storeId.value} and ci ${it.ci.value}")
                 delay(100)
             }
@@ -41,54 +40,4 @@ internal class FlowPracticalExample {
 
         println("All done, everything took $duration")
     }
-
-    @Test
-    fun flowDemoAobToOspWithTimeout() = runBlocking {
-        val storeCiFlow = flow {
-            storeIds.forEach { storeId ->
-                println("Now fetching CI's for store ${storeId.value}")
-                val storeCis = withTimeoutOrNull(1500) { fetchCisForStore(storeId) }
-                storeCis?.forEach {
-                    emit(it)
-                }
-
-                if (storeCis == null) {
-                    println("Store took too long, no overrides sent for store ${storeId.value}")
-                } else {
-                    println("Fetched all CI's for store ${storeId.value}")
-                }
-            }
-        }
-
-        storeCiFlow.collect {
-            println("Sending override for store ${it.storeId.value} and ci ${it.ci.value}")
-            delay(100)
-        }
-
-        println("All done!")
-    }
-
-    private suspend fun fetchCisForStore(storeId: StoreId): List<StoreCi> {
-        val storeCis = (1..3).map {
-            val randomCi = ConsumerItem(Random.nextInt(1111111, 9999999).toString())
-            StoreCi(storeId, randomCi)
-        }
-
-        // Ooops fetching cis for this store took too long
-        if (storeId.value == "99999") {
-            delay(3000)
-        } else {
-            delay(1000)
-        }
-
-        return storeCis
-    }
 }
-
-@JvmInline
-value class StoreId(val value: String)
-
-@JvmInline
-value class ConsumerItem(val value: String)
-
-data class StoreCi(val storeId: StoreId, val ci: ConsumerItem)
