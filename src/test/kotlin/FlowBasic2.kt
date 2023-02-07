@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
-internal class FlowBasic {
+internal class FlowBasic2 {
     @Test
     fun `flows with different operators`() = runBlocking {
         val myFlow = flow {
