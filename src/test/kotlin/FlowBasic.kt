@@ -1,32 +1,20 @@
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 internal class FlowBasic {
     @Test
-    fun `flows with different operators`() = runBlocking {
+    fun `basic kotlin flow`() = runBlocking {
         val myFlow = flow {
-            repeat(10) {
-                emit(it)
+            repeat(5) {
+                emit(it + 1)
                 delay(1000)
             }
         }
 
-        myFlow
-            .map { it + 25 }
-            .filter { it % 2 == 0 }
-            .transform {
-                emit("Tick tock #$it")
-                if (it > 33 ) {
-                    emit("BOOM!")
-                }
-            }
-            .collect {
-                println(it)
-            }
+        myFlow.collect {
+            println(it)
+        }
     }
 }
