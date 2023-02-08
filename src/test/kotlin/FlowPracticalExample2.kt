@@ -8,7 +8,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
-class FlowPracticalExample2 {
+internal class FlowPracticalExample2 {
     private val storeIds = listOf(
         StoreId("00988"),
         StoreId("00966"),
