@@ -31,7 +31,7 @@ class FlowCombines {
         }
     }
 
-    private fun flowFrom(myFlow: Flow<*>, valueFromOtherFlow: Int) = myFlow.map {"(${it}_$valueFromOtherFlow)"}
+    private fun flowFrom(myFlow: Flow<*>, valueFromOtherFlow: Any) = myFlow.map { "(${it}_$valueFromOtherFlow)" }
 
     @Test
     @OptIn(FlowPreview::class)
@@ -53,5 +53,21 @@ class FlowCombines {
         slowFlow.flatMapConcat { slowFlowValue -> flowFrom(fastFlow, slowFlowValue) }.collect {
             println("FlatMapConcat: $it")
         }
+    }
+
+    @OptIn(FlowPreview::class)
+    @Test
+    fun `test multiple combine`() = runBlocking {
+        val slowFlow = (1..3).asFlow().onEach { delay(400) }
+        val fastFlow = listOf("A", "B", "C").asFlow().onEach { delay(120) }
+        val thirdFlow = listOf("X", "Y", "Z").asFlow().onEach { delay(250) }
+
+        // Values are combined sequentially and will start when the first flow is done
+        slowFlow
+            .flatMapConcat { slowFlowValue -> flowFrom(fastFlow, slowFlowValue) }
+            .flatMapConcat { slowAndFastFlowValue -> flowFrom(thirdFlow, slowAndFastFlowValue) }
+            .collect {
+                println("Multiconcat ($it)")
+            }
     }
 }
