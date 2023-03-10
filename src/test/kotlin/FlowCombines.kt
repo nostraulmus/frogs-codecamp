@@ -4,7 +4,27 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
-class FlowCombines {
+internal class FlowCombines {
+    @Test
+    fun `flow dependencies with collect in flow builder`() = runBlocking {
+        val parentFlow = flow { setOf("A", "B", "C").forEach { emit(it) } }
+            .onEach {
+                println(it)
+                delay(200L)
+            }
+
+        val childFlow = flow {
+            parentFlow.collect()
+            setOf("1", "2", "3").forEach { emit(it) }
+        }
+            .onEach {
+                println(it)
+                delay(200L)
+            }
+
+        childFlow.collect()
+    }
+
     @Test
     fun `test combine`() = runBlocking {
         val slowFlow = (1..3).asFlow().onEach { delay(400) }
@@ -69,5 +89,67 @@ class FlowCombines {
             .collect {
                 println("Multiconcat ($it)")
             }
+    }
+
+    @Test
+    fun `combine sets`() = runBlocking {
+        val empty = flowOf(emptySet<String>())
+        val set1 = flowOf(setOf("A", "B", "C"))
+        val set2 = flowOf(setOf("C", "D", "E"))
+        val set3 = flowOf(setOf("E", "F", "G"))
+
+        val flow = empty.combine(set1) { v1, v2 ->
+            v1 + v2
+        }.combine(set2) { v1, v2 ->
+            v1 + v2
+        }.combine(set3) { v1, v2 ->
+            v1 + v2
+        }
+
+        flow.collect {
+            println("Collected $it")
+        }
+    }
+
+    @Test
+    fun `combine sets but beware of the emptyFlow()`() = runBlocking {
+        val empty = emptyFlow<Set<String>>()
+        val set1 = flowOf(setOf("A", "B", "C"))
+        val set2 = flowOf(setOf("C", "D", "E"))
+        val set3 = flowOf(setOf("E", "F", "G"))
+
+        val flow = empty.combine(set1) { v1, v2 ->
+            v1 + v2
+        }.combine(set2) { v1, v2 ->
+            v1 + v2
+        }.combine(set3) { v1, v2 ->
+            v1 + v2
+        }
+
+        flow.collect {
+            println("Collected $it")
+        }
+    }
+
+    @Test
+    fun `even in the end, emptyFlow() is evil`() = runBlocking {
+        val empty = flowOf(emptySet<String>())
+        val set1 = flowOf(setOf("A", "B", "C"))
+        val set2 = flowOf(setOf("C", "D", "E"))
+        val set3 = flowOf(setOf("E", "F", "G"))
+
+        val flow = empty.combine(set1) { v1, v2 ->
+            v1 + v2
+        }.combine(set2) { v1, v2 ->
+            v1 + v2
+        }.combine(set3) { v1, v2 ->
+            v1 + v2
+        }.combine(emptyFlow<Set<String>>()) { v1, v2 ->
+            v1 + v2
+        }
+
+        flow.collect {
+            println("Collected $it")
+        }
     }
 }
