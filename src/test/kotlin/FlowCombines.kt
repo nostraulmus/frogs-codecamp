@@ -7,20 +7,20 @@ import org.junit.jupiter.api.Test
 internal class FlowCombines {
     @Test
     fun `flow dependencies with collect in flow builder`() = runBlocking {
-        val parentFlow = flow { setOf("A", "B", "C").forEach { emit(it) } }
-            .onEach {
-                println(it)
-                delay(200L)
-            }
+        val parentFlow = flow {
+            setOf("A", "B", "C").forEach { emit(it) }
+        }.onEach {
+            println(it)
+            delay(200L)
+        }
 
         val childFlow = flow {
             parentFlow.collect()
             setOf("1", "2", "3").forEach { emit(it) }
+        }.onEach {
+            println(it)
+            delay(200L)
         }
-            .onEach {
-                println(it)
-                delay(200L)
-            }
 
         childFlow.collect()
     }
